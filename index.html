@@ -1,0 +1,1395 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Werewolf: The Grimoire (Custom)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* ゴシック・タロット パレット */
+            --bg-paper: #e3d8c4;
+            --bg-dark: #1a1510;
+            --bg-dark-transparent: rgba(20, 16, 12, 0.95);
+            --accent-gold: #c5a059;
+            --accent-blood: #8a1c1c;
+            --text-main: #2c241b;
+            --text-light: #e3d8c4;
+
+            /* 役職カラー */
+            --role-wolf: #b71c1c;
+            --role-seer: #7b1fa2;
+            --role-guard: #00695c;
+            --role-madman: #e65100;
+            --role-medium: #7b1fa2;
+            --role-fox: #fbc02d;
+            --role-fanatic: #ef6c00;
+            --role-immoral: #5d4037;
+            --role-cat: #ad1457;
+            --role-baker: #795548;
+
+            --nav-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image:
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+                radial-gradient(circle at center, #2a221b 0%, #000000 100%);
+            color: var(--text-light);
+            font-family: 'Shippori Mincho', serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+
+        button {
+            border: 1px solid var(--accent-gold);
+            background: linear-gradient(135deg, #2c241b 0%, #1a1510 100%);
+            color: var(--accent-gold);
+            font-family: 'Shippori Mincho', serif;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            font-size: 1em;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            filter: grayscale(100%);
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, var(--accent-blood) 0%, #4a0f0f 100%);
+            color: white;
+            border-color: #ff5252;
+        }
+
+        button.icon-btn {
+            width: auto;
+            padding: 5px 10px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            font-size: 1.5em;
+        }
+
+        button.sm-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button.gm-login-btn {
+            margin-top: 20px;
+            background: transparent;
+            border: 1px dashed var(--text-main);
+            color: var(--text-main);
+            font-size: 0.8em;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        button.gm-login-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--accent-gold);
+            color: var(--text-light);
+            font-family: 'Shippori Mincho', serif;
+            border-radius: 4px;
+        }
+
+        input[type="password"] {
+            background: var(--bg-paper);
+            color: var(--text-main);
+            border: 1px solid var(--text-main);
+            font-family: sans-serif;
+        }
+
+        option {
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        /* --- Layout --- */
+        header {
+            height: 60px;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background: var(--bg-dark-transparent);
+            border-bottom: 1px solid var(--accent-gold);
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .phase-indicator {
+            font-size: 1.2em;
+            color: var(--accent-gold);
+            text-shadow: 0 0 5px rgba(197, 160, 89, 0.3);
+        }
+
+        .timer {
+            font-family: monospace;
+            font-size: 1.2em;
+            color: var(--accent-blood);
+            margin-left: 10px;
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 20px;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .night-mode main {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        nav {
+            height: var(--nav-height);
+            flex-shrink: 0;
+            background: #0f0c0a;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--accent-gold);
+            z-index: 20;
+        }
+
+        .nav-item {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.7em;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: var(--accent-gold);
+            background: rgba(197, 160, 89, 0.05);
+        }
+
+        .nav-icon {
+            font-size: 1.5em;
+            margin-bottom: 4px;
+        }
+
+        .badge {
+            background: var(--accent-blood);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.8em;
+            position: absolute;
+            top: 5px;
+            right: 20%;
+        }
+
+        /* --- Components --- */
+        .config-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .player-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #2a221b, transparent);
+            border-left: 3px solid var(--accent-gold);
+            border-bottom: 1px solid #333;
+        }
+
+        .player-list-item.dead {
+            opacity: 0.4;
+            text-decoration: line-through;
+            border-left-color: #555;
+        }
+
+        .tarot-card {
+            background-color: var(--bg-paper);
+            color: var(--text-main);
+            border: 4px double var(--text-main);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tarot-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1' fill='%232c241b' opacity='0.1'/%3E%3C/svg%3E");
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .tarot-title {
+            font-size: 1.5em;
+            border-bottom: 2px solid var(--text-main);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+        }
+
+        .tarot-desc {
+            font-size: 0.9em;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .spotlight-target {
+            transition: all 0.5s ease;
+            opacity: 0.6;
+            filter: grayscale(80%);
+            margin-bottom: 8px;
+        }
+
+        .spotlight-target.selected {
+            opacity: 1;
+            filter: grayscale(0%);
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        .target-btn {
+            width: 100%;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #444;
+            color: #ccc;
+        }
+
+        .target-btn.active {
+            background: var(--accent-blood);
+            border-color: red;
+            color: white;
+            box-shadow: 0 0 15px var(--accent-blood);
+        }
+
+        .story-card {
+            background: rgba(20, 16, 12, 0.8);
+            border: 1px solid var(--accent-gold);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-gold);
+            animation: slideIn 0.5s ease;
+        }
+
+        .story-card.death {
+            border-left-color: var(--accent-blood);
+            background: rgba(50, 0, 0, 0.3);
+        }
+
+        .story-time {
+            font-size: 0.7em;
+            color: var(--accent-gold);
+            display: block;
+            margin-bottom: 5px;
+            opacity: 0.7;
+        }
+
+        .story-text {
+            font-size: 1em;
+            line-height: 1.5;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Toggle Switch */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .toggle-label {
+            font-size: 0.9em;
+            color: var(--text-light);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent-gold);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--bg-paper);
+            color: var(--text-main);
+            padding: 20px;
+            border: 4px double var(--bg-dark);
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            padding: 0;
+            width: auto;
+            color: var(--text-main);
+            box-shadow: none;
+            cursor: pointer;
+        }
+
+        .host-badge {
+            color: var(--accent-gold);
+            font-size: 0.8em;
+            border: 1px solid var(--accent-gold);
+            padding: 1px 4px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+
+        .vis-badge {
+            font-size: 0.8em;
+            border: 1px solid #666;
+            padding: 1px 4px;
+            border-radius: 4px;
+            margin-left: 5px;
+            background: #333;
+            color: #fff;
+        }
+
+        .action-result {
+            font-size: 0.8em;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: 5px;
+            background: #333;
+            border: 1px solid #555;
+            white-space: nowrap;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        .result-safe {
+            color: #69f0ae;
+            border-color: #69f0ae;
+        }
+
+        .result-danger {
+            color: #ff5252;
+            border-color: #ff5252;
+        }
+
+        .result-fox {
+            color: var(--role-fox);
+            border-color: var(--role-fox);
+        }
+
+        .error-box {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            right: 10px;
+            background: rgba(50, 0, 0, 0.9);
+            padding: 10px;
+            border: 1px solid red;
+            z-index: 999;
+            color: #ffaaaa;
+        }
+
+        .nav-area {
+            display: flex;
+            flex: 1;
+            justify-content: space-around;
+            /* 均等配置 */
+        }
+    </style>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+        "firebase/app": "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js",
+        "firebase/database": "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"
+      }
+    }
+    </script>
+</head>
+
+<body>
+
+    <div id="app" :class="{ 'night-mode': state.phase === 'NIGHT' }">
+        <!-- ヘッダー -->
+        <header>
+            <div class="phase-indicator">
+                <span v-if="state.phase === 'LOBBY'">待合室</span>
+                <span v-else-if="state.phase === 'NIGHT'">🌙 第{{state.turn_count}}夜</span>
+                <span v-else-if="state.phase === 'DAY'">☀️ {{state.turn_count}}日目</span>
+                <span v-else-if="state.phase === 'VOTE'">⚖️ 審判</span>
+                <span v-else>終幕</span>
+            </div>
+            <div class="nav-area">
+                <div class="nav-item" :class="{ active: activeTab === 'players' }" @click="activeTab = 'players'">
+                    <span class="nav-icon">♟</span><span>運命</span>
+                </div>
+                <div class="nav-item" :class="{ active: activeTab === 'action' }" @click="activeTab = 'action'">
+                    <span class="nav-icon">🔮</span><span>儀式</span>
+                    <span
+                        v-if="!hasActionDone && !state.winner_team && myPlayer?.is_alive && (state.phase === 'VOTE' || state.phase === 'NIGHT')"
+                        class="badge">!</span>
+                </div>
+                <div class="nav-item" :class="{ active: activeTab === 'logs' }" @click="activeTab = 'logs'">
+                    <span class="nav-icon">📜</span><span>年代記</span>
+                </div>
+                <!-- GM用タブ: ホストのみ表示 -->
+                <div v-if="isHost" class="nav-item" :class="{ active: activeTab === 'gm' }" @click="activeTab = 'gm'">
+                    <span class="nav-icon" style="color:var(--accent-gold);">👑</span><span
+                        style="color:var(--accent-gold);">支配</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <button class="icon-btn" @click="showRoleList = true">📖</button>
+                    <div class="timer" v-if="state.timer_end_at > 0">{{ timeLeft }}</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 役職一覧モーダル -->
+        <div v-if="showRoleList" class="modal-overlay" @click.self="showRoleList = false">
+            <div class="modal-content">
+                <button class="close-btn" @click="showRoleList = false">×</button>
+                <h3
+                    style="color:var(--text-main); border-bottom:1px solid var(--accent-gold); margin-bottom:15px; padding-bottom:5px;">
+                    禁断の知識</h3>
+                <div v-for="(def, key) in roleDefinitions" :key="key"
+                    style="margin-bottom:15px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
+                    <div style="font-weight:bold; color:var(--text-main); font-size:1.1em;">
+                        {{ def.label }} <span :style="{color: getRoleColor(key), fontSize:'0.7em'}">({{ def.team
+                            }})</span>
+                    </div>
+                    <div style="font-size:0.9em; color:#444; margin-top:5px; line-height:1.4;">{{ def.desc }}</div>
+                </div>
+                <!-- GMログインボタン -->
+                <div style="margin-top:20px; text-align:center;">
+                    <button class="gm-login-btn" @click="becomeGm">管理領域へ (GMログイン)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GMパスワード入力モーダル -->
+        <div v-if="showGmPasswordModal" class="modal-overlay" @click.self="showGmPasswordModal = false">
+            <div class="modal-content">
+                <button class="close-btn" @click="showGmPasswordModal = false">×</button>
+                <h3
+                    style="color:var(--text-main); margin-bottom:15px; text-align:center; border-bottom:1px solid var(--accent-gold); padding-bottom:10px;">
+                    支配者の合言葉</h3>
+                <p style="font-size:0.9em; color:#666; margin-bottom:15px;">管理領域へのアクセスパスワードを唱えよ。</p>
+                <form @submit.prevent="submitGmLogin">
+                    <input type="password" v-model="gmPasswordInput" placeholder="パスワードを入力..."
+                        style="margin-bottom:20px;" autocomplete="off">
+                    <button type="submit" class="primary">認証</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- エラー表示 -->
+        <div v-if="errorMessage" class="error-box">⚠️ {{ errorMessage }}</div>
+
+        <!-- メインエリア -->
+        <main>
+            <div v-if="loading" style="text-align:center; padding-top:50px;">
+                <p style="color:var(--accent-gold);">運命を読み込み中...</p>
+            </div>
+
+            <!-- タブ: GMコントロールページ (GM専用) -->
+            <div v-else-if="activeTab === 'gm'">
+                <div class="config-panel" style="text-align:left;">
+                    <h2 style="color:var(--accent-gold); margin-bottom:15px; text-align:center;">支配者 (GM) 制御盤</h2>
+
+                    <h3 style="color:var(--accent-gold); border-bottom:1px solid #555; margin-bottom:10px;">役職の配分</h3>
+                    <div v-for="(count, role) in roleCounts" :key="role"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding-bottom: 2px; border-bottom: 1px dashed #333;">
+                        <span :style="{color: getRoleColor(role)}">{{ roleDefinitions[role].label }}</span>
+                        <div>
+                            <button class="sm-btn" @click="adjustRole(role, -1)">-</button>
+                            <span style="display:inline-block; width: 25px; text-align: center;">{{ count }}</span>
+                            <button class="sm-btn" @click="adjustRole(role, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="text-center" style="margin-top: 10px; font-weight: bold;">
+                        <span :style="{ color: configStatusColor }">
+                            設定: {{ totalConfiguredRoles }} / 参加: {{ playerCount }}
+                        </span>
+                    </div>
+                    <div v-if="roleCounts.WEREWOLF < 1" class="text-center" style="color: #ff5252; font-size: 0.8em;">
+                        ※人狼が必要</div>
+
+                    <h3
+                        style="color:var(--accent-gold); border-bottom:1px solid #555; margin-bottom:10px; margin-top:20px;">
+                        詳細ルール</h3>
+                    <div class="toggle-row">
+                        <span class="toggle-label">🛡️ 騎士自衛</span>
+                        <label class="toggle-switch"><input type="checkbox" v-model="gameConfig.knightSelfGuard"><span
+                                class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">🔄 連続ガード</span>
+                        <label class="toggle-switch"><input type="checkbox"
+                                v-model="gameConfig.knightContinuousGuard"><span class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">👁️ 狼の狂人視認</span>
+                        <label class="toggle-switch"><input type="checkbox" v-model="gameConfig.wolfKnowsMadman"><span
+                                class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">📢 霊媒結果公開</span>
+                        <label class="toggle-switch"><input type="checkbox"
+                                v-model="gameConfig.publicMediumResult"><span class="slider"></span></label>
+                    </div>
+
+                    <div style="margin-top:20px; border-top:1px solid #555; padding-top:10px;">
+                        <h4 style="margin-bottom:10px;">進行制御</h4>
+                        <button v-if="state.phase === 'LOBBY'" class="primary" @click="startGame"
+                            :disabled="!isConfigValid" style="width:100%; margin-bottom:10px;">儀式開始</button>
+                        <button v-if="state.phase === 'DAY'" @click="forceEndDay"
+                            style="width:100%; margin-bottom:10px; background:#444;">議論を打ち切り、投票へ</button>
+                        <button @click="resetGame" style="background:#d32f2f; color:white; border:none;">世界を破棄
+                            (リセット)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- タブ1: 運命 (ロビー & プレイヤーリスト) -->
+            <div v-else-if="activeTab === 'players'">
+                <div v-if="state.phase === 'LOBBY'" style="text-align:center;">
+                    <h2 style="color:var(--accent-gold); margin-bottom:20px;">The Grimoire</h2>
+                    <div v-if="!joined">
+                        <input v-model="inputName" placeholder="汝の名を刻め" maxlength="10">
+                        <button class="primary" @click="joinGame" :disabled="!inputName">契約（参加）</button>
+                    </div>
+                    <div v-else>
+                        <p>契約完了。開宴を待たれよ。</p>
+                    </div>
+                    <div style="margin-top:20px; font-size:0.8em; color:#888;">
+                        <div v-if="!isHost">
+                            支配者(GM)が儀式を準備中...<br>
+                            <span v-if="!state.host_uid"
+                                style="color:var(--accent-gold)">※GM不在。右上の本アイコンからログインしてください。</span>
+                        </div>
+                        <div v-else>
+                            <p style="color:var(--accent-gold);">あなたは支配者です。<br>「支配」タブから設定を行ってください。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else>
+                    <div v-for="p in state.players" :key="p.uid" class="player-list-item"
+                        :class="{ dead: !p.is_alive }">
+                        <div style="flex:1;">
+                            <div>
+                                <strong style="font-size:1.1em;">{{ p.name }}</strong>
+                                <span v-if="p.uid === state.host_uid" class="host-badge">GM</span>
+                                <span v-if="p.uid === myUid"
+                                    style="color:var(--role-guard); font-size:0.8em; border:1px solid var(--role-guard); padding:0 3px; margin-left:5px;">YOU</span>
+                                <span v-if="getVisualInfo(p.uid)" class="vis-badge"
+                                    :style="{color: getVisualInfo(p.uid).color}">{{ getVisualInfo(p.uid).label }}</span>
+                            </div>
+                            <div v-if="getActionLog(p.uid)">
+                                <span v-for="res in getActionLog(p.uid)" class="action-result"
+                                    :class="{ 'result-danger': res.includes('●')||res.includes('襲撃')||res.includes('呪殺'), 'result-safe': res.includes('○'), 'result-fox': res.includes('🦊') }">{{
+                                    res }}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right; min-width:60px;">
+                            <span v-if="!p.is_alive">💀 死亡</span>
+                            <span v-else style="color:var(--role-guard)">生存</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- タブ2: 儀式 (アクション) -->
+            <div v-else-if="activeTab === 'action'">
+                <div class="tarot-card" @click="showRole = !showRole">
+                    <div v-if="!showRole">
+                        <div style="font-size:3em; margin-bottom:10px;">🃏</div>
+                        <p>タップして運命（役職）を確認</p>
+                    </div>
+                    <div v-else>
+                        <div class="tarot-title" :style="{color: getRoleColor(myRole)}">{{ myRoleLabel }}</div>
+                        <div class="tarot-desc">{{ roleDefinitions[myRole].desc }}</div>
+                        <div
+                            style="font-size:0.7em; margin-top:10px; color:#555; border-top:1px dashed #aaa; padding-top:5px;">
+                            (タップで伏せる)<br>
+                            <span v-if="myRole==='KNIGHT'">自衛: {{ gameConfig.knightSelfGuard ? '○' : '×' }} / 連続: {{
+                                gameConfig.knightContinuousGuard ? '○' : '×' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="state.phase !== 'LOBBY' && !state.winner_team && myPlayer?.is_alive">
+                    <h3 style="color:var(--accent-gold); margin-bottom:15px; text-align:center;">{{ state.phase ===
+                        'NIGHT' ? '深夜の儀式' : (state.phase === 'VOTE' ? '処刑投票' : '議論の時間') }}</h3>
+                    <div v-if="hasActionDone"
+                        style="text-align:center; padding:20px; border:1px solid var(--role-guard); color:var(--role-guard); background:rgba(0,100,0,0.1);">
+                        選択を受け付けました。<br>時が満ちるのを待ちなさい。</div>
+                    <div v-else>
+                        <div v-if="state.phase === 'VOTE' || (state.phase === 'NIGHT' && !isNoActionRole)">
+                            <p style="margin-bottom:10px; font-size:0.9em; color:#ccc; text-align:center;">{{
+                                nightActionMessage || '対象を選択してください' }}</p>
+                            <div v-for="p in actionTargets" :key="p.uid" class="spotlight-target"
+                                :class="{ selected: targetUid === p.uid }">
+                                <button class="target-btn" :class="{ active: targetUid === p.uid }"
+                                    @click="targetUid = p.uid">{{ p.name }}</button>
+                            </div>
+                            <button class="primary" @click="submitAction" :disabled="!targetUid"
+                                style="margin-top:20px; font-weight:bold;">決定する</button>
+                        </div>
+                        <div v-else-if="state.phase === 'NIGHT' && isNoActionRole">
+                            <p style="text-align:center; margin-bottom:20px;">あなたには夜に行使できる力がありません。</p>
+                            <button @click="submitAction">眠りにつく</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="!state.winner_team && !myPlayer?.is_alive && state.phase !== 'LOBBY'"
+                    style="text-align:center; padding-top:20px; color:#777;">
+                    <h3>💀 あなたは死亡しました</h3>
+                    <p>霊界から結末を見届けましょう</p>
+                </div>
+
+                <div v-if="state.winner_team"
+                    style="text-align:center; padding:30px; border:2px solid var(--accent-gold); background:rgba(0,0,0,0.5);">
+                    <h2 style="color:var(--accent-gold); margin-bottom:20px;">{{ state.winner_team === 'VILLAGERS' ?
+                        '市民陣営' : state.winner_team === 'WEREWOLVES' ? '人狼陣営' : '妖狐陣営' }} 勝利</h2>
+                </div>
+            </div>
+
+            <!-- タブ3: 年代記 (ログ) -->
+            <div v-else-if="activeTab === 'logs'">
+                <div v-for="(log, k) in logs" :key="k" class="story-card"
+                    :class="{ death: log.message.includes('処刑') || log.message.includes('無惨') || log.message.includes('道連れ') }">
+                    <span class="story-time">{{ formatLogTime(log) }}</span>
+                    <span class="story-text">{{ log.message }}</span>
+                </div>
+                <div ref="logContainer"></div>
+            </div>
+        </main>
+
+        <!-- ナビゲーション -->
+
+    </div>
+
+    <script type="module">
+        import { createApp, reactive, computed, ref, watch, onMounted, nextTick } from 'vue';
+        import { initializeApp } from 'firebase/app';
+        import { getDatabase, ref as dbRef, set, update, onValue, push, serverTimestamp, remove } from 'firebase/database';
+
+        // ▼▼▼ Firebase Config (ここに貼り付け) ▼▼▼
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMtk68RhSTxc3Z50RNDo4pdZqJV07NKlk",
+            authDomain: "jinro-game-e0a88.firebaseapp.com",
+            databaseURL: "https://jinro-game-e0a88-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "jinro-game-e0a88",
+            storageBucket: "jinro-game-e0a88.firebasestorage.app",
+            messagingSenderId: "469285329354",
+            appId: "1:469285329354:web:b5a14b8fb5e0bc229c1733",
+            measurementId: "G-KKZS80GP12"
+        };
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        const roleDefinitions = {
+            VILLAGER: { label: '市民', team: '市民陣営', desc: '能力はありません。議論と推理で人狼を追い詰めましょう。' },
+            WEREWOLF: { label: '人狼', team: '人狼陣営', desc: '毎晩、襲撃対象を1人選びます。票が割れた場合はランダムに決定されます。' },
+            SEER: { label: '占い師', team: '市民陣営', desc: '毎晩、1人の正体(人狼か否か)を占います。妖狐は占っても死にませんが正体は分かります。' },
+            KNIGHT: { label: '騎士', team: '市民陣営', desc: '毎晩、1人を人狼の襲撃から守ります。自分を守れるかはルール次第です。' },
+            MADMAN: { label: '狂人', team: '人狼陣営', desc: '人間ですが人狼に加担します。能力はありません。嘘をついて場を混乱させましょう。' },
+            FANATIC: { label: '狂信者', team: '人狼陣営', desc: '人狼が誰か分かっている狂人です。能力はありません。' },
+            MEDIUM: { label: '霊媒師', team: '市民陣営', desc: '毎晩、前日に処刑された人が「人狼」だったかどうかを知ることができます。' },
+            FOX: { label: '妖狐', team: '狐陣営', desc: '第3陣営。占われると正体がバレますが死にません。襲撃も無効。最後まで生き残れば勝利。' },
+            IMMORALIST: { label: '背徳者', team: '狐陣営', desc: '妖狐が誰か分かります。妖狐が死ぬと後を追って死にます。' },
+            CAT: { label: '猫又', team: '市民陣営', desc: '処刑されるとランダムな1人を、襲撃されると犯人の人狼を道連れにします。' },
+            BAKER: { label: 'パン屋', team: '市民陣営', desc: '毎朝パンを焼きます。生きていることが皆に伝わります。' }
+        };
+
+        createApp({
+            setup() {
+                // ▼▼▼ パスワード設定 ▼▼▼
+                const GM_PASSWORD = 'admin';
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+                // UI State
+                const activeTab = ref('players');
+                const roomId = 'room_01';
+                const loading = ref(true);
+                const isSubmitting = ref(false);
+                const errorMessage = ref('');
+                const myUid = ref(localStorage.getItem('jinro_uid') || generateUuid());
+                localStorage.setItem('jinro_uid', myUid.value);
+
+                const inputName = ref('');
+                const joined = ref(false);
+                const showRole = ref(false);
+                const showRoleList = ref(false);
+                const targetUid = ref('');
+                const timeLeft = ref(0);
+                const logContainer = ref(null);
+                const showGmPasswordModal = ref(false);
+                const gmPasswordInput = ref('');
+                const processingAction = ref(false); // 重複処理防止用ロック
+
+
+                const state = reactive({
+                    phase: 'LOBBY', turn_count: 1, timer_end_at: 0, host_uid: '', winner_team: null,
+                    players: {}, actions: {}, executions: {}
+                });
+
+                // Rules & Data
+                const gameConfig = reactive({
+                    knightSelfGuard: false, knightContinuousGuard: false,
+                    wolfKnowsMadman: false, publicMediumResult: false
+                });
+                const privateData = reactive({});
+                const privateDataAll = reactive({});
+                const logs = reactive({});
+                const roleCounts = reactive({
+                    WEREWOLF: 1, SEER: 1, KNIGHT: 1, MADMAN: 0, FANATIC: 0,
+                    MEDIUM: 0, FOX: 0, IMMORALIST: 0, CAT: 0, BAKER: 0, VILLAGER: 1
+                });
+
+                // Firebase Init
+                let db;
+                try {
+                    if (firebaseConfig.apiKey.includes("ここに")) throw new Error("API Key未設定: HTMLファイルを開いて設定を書き換えてください");
+                    const app = initializeApp(firebaseConfig);
+                    db = getDatabase(app);
+                } catch (e) {
+                    errorMessage.value = e.message;
+                    loading.value = false;
+                }
+
+                // Computed
+                const myPlayer = computed(() => state.players?.[myUid.value]);
+                const isHost = computed(() => state.host_uid === myUid.value);
+                const playerCount = computed(() => Object.keys(state.players || {}).length);
+                const myRole = computed(() => privateData[myUid.value]?.role || 'VILLAGER');
+                const myRoleLabel = computed(() => roleDefinitions[myRole.value]?.label || '???');
+
+                const phaseLabel = computed(() => {
+                    const m = { LOBBY: '待合室', NIGHT: '深夜', DAY: '昼', VOTE: '審判' };
+                    return m[state.phase] || state.phase;
+                });
+
+                const getRoleColor = (role) => {
+                    const c = {
+                        WEREWOLF: 'var(--role-wolf)', SEER: 'var(--role-seer)', KNIGHT: 'var(--role-guard)',
+                        MADMAN: 'var(--role-madman)', FANATIC: 'var(--role-fanatic)',
+                        MEDIUM: 'var(--role-medium)', FOX: 'var(--role-fox)', IMMORALIST: 'var(--role-immoral)',
+                        CAT: 'var(--role-cat)', BAKER: 'var(--role-baker)'
+                    };
+                    return c[role] || 'var(--text-main)';
+                };
+                const roleColor = computed(() => getRoleColor(myRole.value));
+                const roleStyle = computed(() => ({ borderColor: showRole.value ? roleColor.value : '#555' }));
+
+                const actionTargets = computed(() => {
+                    const living = Object.values(state.players || {}).filter(p => p.is_alive);
+                    const otherLiving = living.filter(p => p.uid !== myUid.value);
+
+                    if (state.phase === 'NIGHT' && myRole.value === 'KNIGHT') {
+                        let targets = gameConfig.knightSelfGuard ? living : otherLiving;
+                        if (!gameConfig.knightContinuousGuard && state.turn_count > 1) {
+                            const lastTurn = state.actions?.[`turn_${state.turn_count - 1}`];
+                            const lastGuarded = lastTurn?.night?.knight_action?.[myUid.value];
+                            if (lastGuarded) targets = targets.filter(p => p.uid !== lastGuarded);
+                        }
+                        return targets;
+                    }
+                    return otherLiving;
+                });
+
+                const isNoActionRole = computed(() => ['VILLAGER', 'MADMAN', 'MEDIUM', 'FOX', 'CAT', 'BAKER', 'FANATIC', 'IMMORALIST'].includes(myRole.value));
+
+                const nightActionMessage = computed(() => {
+                    if (myRole.value === 'WEREWOLF') return '牙を剥く対象を選べ';
+                    if (myRole.value === 'SEER') return '真実を暴く対象を選べ';
+                    if (myRole.value === 'KNIGHT') return '守護する対象を選べ';
+                    return '';
+                });
+
+                const hasActionDone = computed(() => {
+                    const acts = state.actions?.[`turn_${state.turn_count}`]?.[state.phase === 'VOTE' ? 'day' : 'night'] || {};
+                    if (state.phase === 'VOTE') return !!acts.votes?.[myUid.value];
+                    if (state.phase === 'NIGHT') {
+                        if (isNoActionRole.value) return !!acts.sleep?.[myUid.value];
+                        if (myRole.value === 'WEREWOLF') return !!acts.wolf_votes?.[myUid.value];
+                        if (myRole.value === 'SEER') return !!acts.seer_action?.[myUid.value];
+                        if (myRole.value === 'KNIGHT') return !!acts.knight_action?.[myUid.value];
+                    }
+                    return false;
+                });
+
+                const totalConfiguredRoles = computed(() => Object.values(roleCounts).reduce((a, b) => a + b, 0));
+                const isConfigValid = computed(() => totalConfiguredRoles.value === playerCount.value && playerCount.value >= 4 && roleCounts.WEREWOLF >= 1);
+                const configStatusColor = computed(() => isConfigValid.value ? '#69f0ae' : '#ff5252');
+
+                const getActionLog = (targetUid) => {
+                    if (targetUid === myUid.value) return null;
+                    const results = [];
+                    for (let i = 1; i <= state.turn_count; i++) {
+                        const turnData = state.actions?.[`turn_${i}`];
+                        if (myRole.value === 'SEER') {
+                            if (turnData?.night?.seer_action?.[myUid.value] === targetUid) {
+                                const realRole = privateDataAll[targetUid]?.role;
+                                let resText = (realRole === 'FOX') ? '🦊妖狐' : (realRole === 'WEREWOLF' ? '●人狼' : '○人間');
+                                results.push(`Day${i}占:${resText}`);
+                            }
+                        }
+                        if (myRole.value === 'MEDIUM') {
+                            if (state.executions?.[`turn_${i}`] === targetUid) {
+                                const realRole = privateDataAll[targetUid]?.role;
+                                results.push(`Day${i}霊:${realRole === 'WEREWOLF' ? '●人狼' : '○人間'}`);
+                            }
+                        }
+                        if (myRole.value === 'WEREWOLF') {
+                            if (turnData?.night?.wolf_votes?.[myUid.value] === targetUid) results.push(`Day${i}襲撃`);
+                        }
+                    }
+                    return results.length > 0 ? results : null;
+                };
+
+                const getVisualInfo = (targetUid) => {
+                    if (targetUid === myUid.value) return null;
+                    const targetRole = privateDataAll[targetUid]?.role;
+                    if (!targetRole) return null;
+                    if (myRole.value === 'FANATIC' && targetRole === 'WEREWOLF') return { label: '🐺味方', color: 'var(--role-wolf)' };
+                    if (myRole.value === 'IMMORALIST' && targetRole === 'FOX') return { label: '🦊崇拝', color: 'var(--role-fox)' };
+                    if (myRole.value === 'WEREWOLF' && targetRole === 'WEREWOLF') return { label: '🐺味方', color: 'var(--role-wolf)' };
+                    if (gameConfig.wolfKnowsMadman && myRole.value === 'WEREWOLF' && targetRole === 'MADMAN') return { label: '🤪狂人', color: 'var(--role-madman)' };
+                    return null;
+                };
+
+                // --- Sync & Watch ---
+                onMounted(() => {
+                    if (!db) return;
+                    const roomRef = dbRef(db, `room/${roomId}`);
+                    onValue(roomRef, (snapshot) => {
+                        loading.value = false;
+                        const data = snapshot.val();
+                        if (data) {
+                            if (data.state) Object.assign(state, data.state);
+                            if (data.config) Object.assign(gameConfig, data.config);
+                            state.players = data.players || {};
+                            state.actions = data.actions || {};
+                            state.executions = data.executions || {};
+                            if (data.logs) {
+                                Object.keys(logs).forEach(k => delete logs[k]);
+                                Object.assign(logs, data.logs);
+                                scrollToBottom();
+                            }
+                            if (state.players[myUid.value]) joined.value = true;
+                            // 自動ホスト付与ロジックを削除 (GM機能実装のため)
+                            // if (!state.host_uid && joined.value) update(dbRef(db, `room/${roomId}/state`), { host_uid: myUid.value });
+
+                            if (activeTab.value === 'players' && state.phase !== 'LOBBY') activeTab.value = 'action';
+                            if (state.winner_team) activeTab.value = 'action';
+                        } else {
+                            state.phase = 'LOBBY';
+                            joined.value = false;
+                        }
+                    });
+                    onValue(dbRef(db, `room/${roomId}/private_data`), (s) => {
+                        Object.assign(privateDataAll, s.val() || {});
+                        if (privateDataAll[myUid.value]) privateData[myUid.value] = privateDataAll[myUid.value];
+                    });
+                });
+
+                watch(gameConfig, (newVal) => { if (isHost.value) update(dbRef(db, `room/${roomId}/config`), newVal); });
+
+                // --- Methods ---
+                function generateUuid() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => (Math.random() * 16 | 0).toString(16)); }
+                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                const formatLogTime = (log) => {
+                    if (log.gameTime) {
+                        const { phase, turn } = log.gameTime;
+                        if (phase === 'LOBBY') return '待合室';
+                        if (phase === 'NIGHT') return `第${turn}夜`;
+                        if (phase === 'DAY') return `${turn}日目 昼`;
+                        if (phase === 'VOTE') return `${turn}日目 審判`;
+                        return `${turn}日目`;
+                    }
+                    return formatTime(log.timestamp);
+                };
+                const scrollToBottom = () => nextTick(() => { if (logContainer.value) logContainer.value.scrollIntoView({ behavior: "smooth", block: "end" }); });
+                const joinGame = async () => await set(dbRef(db, `room/${roomId}/players/${myUid.value}`), { uid: myUid.value, name: inputName.value, is_alive: true });
+                const toggleRole = () => showRole.value = !showRole.value;
+                const adjustRole = (role, delta) => { const newVal = roleCounts[role] + delta; if (newVal >= 0) roleCounts[role] = newVal; };
+                const pushLog = (msg) => push(dbRef(db, `room/${roomId}/logs`), {
+                    message: msg,
+                    timestamp: serverTimestamp(),
+                    gameTime: { phase: state.phase, turn: state.turn_count }
+                });
+
+                // GM Login Functions (Revised - Optimistic Update)
+                const becomeGm = () => {
+                    showRoleList.value = false;
+                    showGmPasswordModal.value = true;
+                    gmPasswordInput.value = '';
+                };
+
+                const submitGmLogin = async () => {
+                    console.log(`[GM Login] Input: '${gmPasswordInput.value}' vs Expected: '${GM_PASSWORD}'`);
+                    if (gmPasswordInput.value.trim() === GM_PASSWORD) {
+                        try {
+                            // 楽観的UI更新: まず画面を変える
+                            showGmPasswordModal.value = false;
+                            state.host_uid = myUid.value; // ローカルで即座にGM権限付与
+                            activeTab.value = 'gm'; // タブ切り替え
+
+                            // バックグラウンドでDB更新
+                            console.log('[GM Login] Granting GM rights...');
+                            await update(dbRef(db, `room/${roomId}/state`), { host_uid: myUid.value });
+                            console.log('[GM Login] DB Updated.');
+
+                            alert('認証成功: 支配者権限を取得しました。');
+                        } catch (e) {
+                            console.error('[GM Login Error]', e);
+                            alert('エラー: ' + e.message);
+                        }
+                    } else {
+                        console.log("Password mismatch");
+                        alert('言葉が違うようだ...');
+                    }
+                };
+
+                const startGame = async () => {
+                    if (!isHost.value) return;
+                    const uids = Object.keys(state.players);
+                    const roles = [];
+                    for (const [role, count] of Object.entries(roleCounts)) {
+                        for (let i = 0; i < count; i++) roles.push(role);
+                    }
+                    if (roles.length !== uids.length) { alert('人数設定エラー'); return; }
+                    for (let i = roles.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[roles[i], roles[j]] = [roles[j], roles[i]]; }
+
+                    const pData = {};
+                    uids.forEach((uid, i) => pData[uid] = { role: roles[i] });
+
+                    await update(dbRef(db), {
+                        [`room/${roomId}/private_data`]: pData,
+                        [`room/${roomId}/state`]: { phase: 'NIGHT', turn_count: 1, winner_team: null, host_uid: myUid.value },
+                        [`room/${roomId}/actions`]: null,
+                        [`room/${roomId}/logs`]: null,
+                        [`room/${roomId}/executions`]: null,
+                        [`room/${roomId}/config`]: gameConfig
+                    });
+                    pushLog('物語が幕を開ける。第一の夜。');
+                };
+
+                const ROLE_ACTION_MAP = {
+                    VOTE: { segment: 'day/votes', required: false, allowSkip: true },
+                    SLEEP: { segment: 'night/sleep', required: false, allowSkip: true },
+                    WEREWOLF: { segment: 'night/wolf_votes', required: true, allowSkip: true },
+                    SEER: { segment: 'night/seer_action', required: true, allowSkip: false },
+                    KNIGHT: { segment: 'night/knight_action', required: true, allowSkip: false },
+                };
+
+                function safeErrorMessage(e) {
+                    if (!e) return '不明なエラー';
+                    if (e.message) return e.message;
+                    try { return JSON.stringify(e); } catch { return String(e); }
+                }
+
+                const submitAction = async () => {
+                    if (isSubmitting.value) return;
+
+                    const base = `room/${roomId}/actions/turn_${state.turn_count}`;
+                    let actionInfo = null;
+                    let path = '';
+
+                    // ▼ フェーズ別に送信先決定
+                    if (state.phase === 'VOTE') {
+                        actionInfo = ROLE_ACTION_MAP.VOTE;
+                        path = `${base}/${actionInfo.segment}/${myUid.value}`;
+                    } else if (state.phase === 'NIGHT') {
+                        if (isNoActionRole.value) {
+                            actionInfo = ROLE_ACTION_MAP.SLEEP;
+                            path = `${base}/${actionInfo.segment}/${myUid.value}`;
+                        } else {
+                            actionInfo = ROLE_ACTION_MAP[myRole.value];
+                            if (actionInfo) {
+                                path = `${base}/${actionInfo.segment}/${myUid.value}`;
+                            }
+                        }
+                    }
+
+                    // ▼ パスが決まらない＝バグ or 未対応役職
+                    if (!path) {
+                        errorMessage.value = '送信先が決定できません（未対応のフェーズ/役職）';
+                        return;
+                    }
+
+                    // ▼ 行動必須なのに未選択 → ブロック
+                    const noTarget = !targetUid.value || targetUid.value === '';
+                    if (actionInfo.required && noTarget && !actionInfo.allowSkip) {
+                        showAlert('対象を選択してください。');
+                        return;
+                    }
+
+                    const valueToSend = noTarget
+                        ? (actionInfo.allowSkip ? 'SKIP' : '')
+                        : targetUid.value;
+
+                    if (valueToSend === '') {
+                        errorMessage.value = '無効なアクションです。';
+                        return;
+                    }
+
+                    // ▼ 送信開始
+                    isSubmitting.value = true;
+                    errorMessage.value = '';
+
+                    try {
+                        await set(dbRef(db, path), valueToSend);
+
+                        // 必要なら軽い通知（SEER の占い結果通知はここでは行わない）
+                        showAlert('送信しました。');
+
+                        // 成功後リセット
+                        targetUid.value = '';
+                    } catch (e) {
+                        errorMessage.value = "送信エラー: " + safeErrorMessage(e);
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
+
+
+                const forceEndDay = async () => {
+                    if (!isHost.value) return;
+                    await update(dbRef(db, `room/${roomId}/state`), { phase: 'VOTE', timer_end_at: 0 });
+                    pushLog('議論終了。審判の時。');
+                };
+
+                const resetGame = async () => {
+                    if (confirm('全てを白紙に戻しますか？')) {
+                        await remove(dbRef(db, `room/${roomId}`));
+                        location.reload();
+                    }
+                };
+
+                setInterval(() => {
+                    if (state.timer_end_at && state.timer_end_at > 0) {
+                        const diff = Math.floor((state.timer_end_at - Date.now()) / 1000);
+                        timeLeft.value = diff > 0 ? diff : 0;
+                        if (isHost.value && diff <= 0 && state.phase === 'DAY') forceEndDay();
+                    }
+                }, 1000);
+
+                watch(() => state.actions, (newActions) => {
+                    if (!isHost.value) return;
+                    const currentTurn = state.actions?.[`turn_${state.turn_count}`];
+                    const living = Object.values(state.players).filter(p => p.is_alive);
+                    if (living.length === 0) return;
+                    if (processingAction.value) return; // 処理中なら無視
+
+                    if (state.phase === 'VOTE' && currentTurn?.day?.votes) {
+                        if (Object.keys(currentTurn.day.votes).length >= living.length) resolveVote(currentTurn.day.votes, living);
+                    }
+
+                    if (state.phase === 'NIGHT' && currentTurn?.night) {
+                        const acts = currentTurn.night;
+                        const doneCount = Object.keys(acts.sleep || {}).length + Object.keys(acts.wolf_votes || {}).length + Object.keys(acts.seer_action || {}).length + Object.keys(acts.knight_action || {}).length;
+                        if (doneCount >= living.length) resolveNight(acts);
+                    }
+                }, { deep: true });
+
+                const resolveVote = async (votes, living) => {
+                    processingAction.value = true;
+                    try {
+                        const counts = {};
+                        Object.values(votes).forEach(t => counts[t] = (counts[t] || 0) + 1);
+                        const max = Math.max(...Object.values(counts));
+                        const candidates = Object.keys(counts).filter(k => counts[k] === max);
+                        const executedId = candidates[Math.floor(Math.random() * candidates.length)];
+
+                        await update(dbRef(db, `room/${roomId}/players/${executedId}`), { is_alive: false });
+                        await set(dbRef(db, `room/${roomId}/executions/turn_${state.turn_count}`), executedId);
+                        pushLog(`${state.players[executedId].name} が処刑された。`);
+
+                        if (gameConfig.publicMediumResult) {
+                            const r = privateDataAll[executedId]?.role;
+                            const isWolf = r === 'WEREWOLF';
+                            pushLog(`霊媒結果: 彼奴は ${isWolf ? '人狼' : '人間'} であった。`);
+                        }
+
+                        if (privateDataAll[executedId]?.role === 'CAT') {
+                            const others = living.filter(p => p.uid !== executedId);
+                            if (others.length > 0) {
+                                const companion = others[Math.floor(Math.random() * others.length)];
+                                await update(dbRef(db, `room/${roomId}/players/${companion.uid}`), { is_alive: false });
+                                pushLog(`猫又の呪いにより、${companion.name} が道連れとなった。`);
+                            }
+                        }
+                        if (privateDataAll[executedId]?.role === 'FOX') await checkImmoralistDeath();
+
+                        if (await checkWinCondition()) return;
+                        await update(dbRef(db, `room/${roomId}/state`), { phase: 'NIGHT' });
+                        pushLog('夜が訪れる。');
+                    } finally {
+                        processingAction.value = false;
+                    }
+                };
+
+                const resolveNight = async (nightActs) => {
+                    processingAction.value = true;
+                    try {
+                        if (state.turn_count === 1) {
+                            await nextDay('静かな朝。昨晩の犠牲者はいない。');
+                            return;
+                        }
+                        const wolfVotes = nightActs.wolf_votes || {};
+                        const counts = {};
+                        Object.values(wolfVotes).forEach(t => counts[t] = (counts[t] || 0) + 1);
+                        let targetId = null;
+                        const attackers = [];
+                        if (Object.keys(counts).length > 0) {
+                            const max = Math.max(...Object.values(counts));
+                            const cands = Object.keys(counts).filter(k => counts[k] === max);
+                            targetId = cands[Math.floor(Math.random() * cands.length)];
+                            Object.entries(wolfVotes).forEach(([uid, target]) => { if (target === targetId) attackers.push(uid); });
+                        }
+
+                        const guardId = Object.values(nightActs.knight_action || {})[0];
+                        const victims = [];
+
+                        if (targetId && targetId !== guardId) {
+                            if (privateDataAll[targetId]?.role !== 'FOX') {
+                                victims.push(targetId);
+                                if (privateDataAll[targetId]?.role === 'CAT' && attackers.length > 0) {
+                                    const badWolf = attackers[Math.floor(Math.random() * attackers.length)];
+                                    victims.push(badWolf);
+                                }
+                            }
+                        }
+
+                        const uniqueVictims = [...new Set(victims)];
+                        for (const vid of uniqueVictims) await update(dbRef(db, `room/${roomId}/players/${vid}`), { is_alive: false });
+                        let foxDied = uniqueVictims.some(vid => privateDataAll[vid]?.role === 'FOX');
+                        if (foxDied) await checkImmoralistDeath(uniqueVictims);
+
+                        let msg = '静かな朝。昨晩の犠牲者はいない。';
+                        const deadNames = uniqueVictims.map(id => state.players[id].name);
+                        if (uniqueVictims.length > 0) msg = `朝。${deadNames.join('、')} の無惨な死体が発見された。`;
+                        else if (targetId && targetId === guardId) msg = '朝。騎士の守護により、犠牲者は出なかった！';
+
+                        if (await checkWinCondition()) return;
+                        await nextDay(msg);
+                    } finally {
+                        processingAction.value = false;
+                    }
+                };
+
+                const checkImmoralistDeath = async (excludeIds = []) => {
+                    const living = Object.values(state.players).filter(p => p.is_alive && !excludeIds.includes(p.uid));
+                    const immoralists = living.filter(p => privateDataAll[p.uid]?.role === 'IMMORALIST');
+                    for (const p of immoralists) {
+                        await update(dbRef(db, `room/${roomId}/players/${p.uid}`), { is_alive: false });
+                        pushLog(`妖狐の後を追い、背徳者 ${p.name} が果てた。`);
+                    }
+                };
+
+                const nextDay = async (msg) => {
+                    pushLog(msg);
+                    const living = Object.values(state.players).filter(p => p.is_alive);
+                    const bakerAlive = living.some(p => privateDataAll[p.uid]?.role === 'BAKER');
+                    if (bakerAlive) pushLog('🍞 パン屋がパンを焼いたようだ。');
+                    await update(dbRef(db), {
+                        [`room/${roomId}/state/phase`]: 'DAY',
+                        [`room/${roomId}/state/turn_count`]: state.turn_count + 1,
+                        [`room/${roomId}/state/timer_end_at`]: Date.now() + 1000 * 60 * 3
+                    });
+                };
+
+                const checkWinCondition = async () => {
+                    if (!isHost.value || state.winner_team || state.phase === 'LOBBY') return false;
+                    await new Promise(r => setTimeout(r, 500));
+                    const living = Object.values(state.players).filter(p => p.is_alive);
+                    if (living.length === 0) return false;
+                    if (!living.every(p => privateDataAll[p.uid])) return false;
+
+                    let wolves = 0, humans = 0, foxes = 0;
+                    living.forEach(p => {
+                        const r = privateDataAll[p.uid]?.role;
+                        if (r === 'WEREWOLF') wolves++;
+                        else if (r === 'FOX') foxes++;
+                        else humans++;
+                    });
+                    let win = null;
+                    if (wolves === 0) win = foxes > 0 ? 'FOX' : 'VILLAGERS';
+                    else if (wolves >= humans + foxes) win = foxes > 0 ? 'FOX' : 'WEREWOLVES';
+
+                    if (win) {
+                        await set(dbRef(db, `room/${roomId}/state/winner_team`), win);
+                        pushLog(`決着。${win === 'FOX' ? '妖狐' : (win === 'VILLAGERS' ? '市民' : '人狼')}陣営の勝利。`);
+                        return true;
+                    }
+                    return false;
+                };
+
+                return {
+                    state, loading, errorMessage, roomId, inputName, joined, showRole, toggleRole,
+                    myUid, myPlayer, isHost, playerCount, joinGame, startGame, resetGame,
+                    phaseLabel, timeLeft, formatTime, myRole, myRoleLabel, roleDefinitions, roleStyle, roleColor,
+                    actionTargets, isNoActionRole, hasActionDone, submitAction, targetUid, nightActionMessage, forceEndDay, logs, logContainer,
+                    getActionLog, roleCounts, totalConfiguredRoles, isConfigValid, configStatusColor, adjustRole, getRoleColor,
+                    getVisualInfo, showRoleList, gameConfig, activeTab, becomeGm, showGmPasswordModal, gmPasswordInput, submitGmLogin,
+                    formatLogTime,
+
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
