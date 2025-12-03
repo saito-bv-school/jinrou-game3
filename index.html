@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 
 <head>
@@ -1254,6 +1254,7 @@
                         const executedId = candidates[Math.floor(Math.random() * candidates.length)];
 
                         await update(dbRef(db, `room/${roomId}/players/${executedId}`), { is_alive: false });
+                        if (state.players[executedId]) state.players[executedId].is_alive = false; // Optimistic update
                         await set(dbRef(db, `room/${roomId}/executions/turn_${state.turn_count}`), executedId);
                         pushLog(`${state.players[executedId].name} が処刑された。`);
 
@@ -1268,6 +1269,7 @@
                             if (others.length > 0) {
                                 const companion = others[Math.floor(Math.random() * others.length)];
                                 await update(dbRef(db, `room/${roomId}/players/${companion.uid}`), { is_alive: false });
+                                if (state.players[companion.uid]) state.players[companion.uid].is_alive = false; // Optimistic update
                                 pushLog(`猫又の呪いにより、${companion.name} が道連れとなった。`);
                             }
                         }
@@ -1314,7 +1316,10 @@
                         }
 
                         const uniqueVictims = [...new Set(victims)];
-                        for (const vid of uniqueVictims) await update(dbRef(db, `room/${roomId}/players/${vid}`), { is_alive: false });
+                        for (const vid of uniqueVictims) {
+                            await update(dbRef(db, `room/${roomId}/players/${vid}`), { is_alive: false });
+                            if (state.players[vid]) state.players[vid].is_alive = false; // Optimistic update
+                        }
                         let foxDied = uniqueVictims.some(vid => privateDataAll[vid]?.role === 'FOX');
                         if (foxDied) await checkImmoralistDeath(uniqueVictims);
 
@@ -1335,6 +1340,7 @@
                     const immoralists = living.filter(p => privateDataAll[p.uid]?.role === 'IMMORALIST');
                     for (const p of immoralists) {
                         await update(dbRef(db, `room/${roomId}/players/${p.uid}`), { is_alive: false });
+                        if (state.players[p.uid]) state.players[p.uid].is_alive = false; // Optimistic update
                         pushLog(`妖狐の後を追い、背徳者 ${p.name} が果てた。`);
                     }
                 };
